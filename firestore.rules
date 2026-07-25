@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // users/{uid}
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // study_plans/{uid}/plans/{planId}
+    match /study_plans/{uid}/plans/{planId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // chat_history/{uid}/sessions/{sessionId}
+    match /chat_history/{uid}/sessions/{sessionId} {
+      allow read, write: if isOwner(uid);
+
+      match /messages/{messageId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // scan_history/{uid}/scans/{scanId}
+    match /scan_history/{uid}/scans/{scanId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // mock_tests/{uid}/tests/{testId} and /results/{resultId}
+    match /mock_tests/{uid}/tests/{testId} {
+      allow read, write: if isOwner(uid);
+    }
+    match /mock_tests/{uid}/results/{resultId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // analytics/{uid}/daily/{yyyy-mm-dd}
+    match /analytics/{uid}/daily/{dayId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // achievements/{uid}/unlocked/{badgeId}
+    match /achievements/{uid}/unlocked/{badgeId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // bookmarks/{uid}/formulas/{formulaId}
+    match /bookmarks/{uid}/formulas/{formulaId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // content/* — shared read-only reference content (PCTB syllabus,
+    // formula book). Only writable via the Firebase console or Admin SDK
+    // (server-side, bypasses these rules), never from the client.
+    match /content/{document=**} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+  }
+}
